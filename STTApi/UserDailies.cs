@@ -5,12 +5,12 @@ namespace STTFleet.STTApi
 {
     public class UserDailies
    {
-      public string Name { get; private set; }
+      public string Name { get; set; }
       public string UserId { get; set; }
-      public int Dailies { get; private set; }
-      public string Squadron { get; private set; }
-      public string SquadronId { get; private set; }
-      public int? EventRank { get; private set; }
+      public int Dailies { get; set; }
+      public string Squadron { get; set; }
+      public string SquadronId { get; set; }
+      public int? EventRank { get; set; }
       
       public static List<UserDailies> Load(FleetMemberInfo memberInfo)
       {

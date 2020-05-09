@@ -7,6 +7,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using STTFleet.STTApi;
 
 namespace STTFleet
 {
@@ -15,21 +16,25 @@ namespace STTFleet
         [FunctionName("FleetEventRanks")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [Queue("fleeteventranks"), StorageAccount("sttfleetg5618_STORAGE")] ICollector<string> msg,
+            ExecutionContext context,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            log.LogInformation("Fleet event ranks started");
+            var configuration = new Configuration(context.FunctionAppDirectory);
+            var gameApi = new GameApi(configuration.STTApiConfiguration);
+            await gameApi.Login();
+            var data = await gameApi.GetFleetMemberInfo();
+            var userdailies = UserDailies.Load(data);
+            var squadranks = SquadEventRank.Load(data);
 
-            string name = req.Query["name"];
+            log.LogInformation("Fleet event ranks users: " + userdailies.Count);
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            var queueItem = new EventRankQueueItem() { UserDailies = userdailies, SquadEventRanks = squadranks };
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+            msg.Add(JsonConvert.SerializeObject(queueItem));
 
-            return new OkObjectResult(responseMessage);
+            return new OkResult();
         }
     }
 }
