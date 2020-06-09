@@ -43,15 +43,15 @@ namespace STTFleet
             fleetData.Players = _UpdatePlayerHistory(fleetData, queueItem.UserDailies);
             updatedFleetData = fleetData;
 
-            try
-            {
-                var t = _SendToDiscord(log, queueItem.UserDailies, fleetData, configuration.DiscordConfiguration.DiscordEventRanksWebhookUrl);
-                Task.WaitAll(t);
-            }
-            catch (Exception e)
-            {
-                log.LogError($"Send to Discord failed: {e.Message}");
-            }
+            // try
+            // {
+            //     var t = _SendToDiscord(log, queueItem.UserDailies, fleetData, configuration.DiscordConfiguration.DiscordEventRanksWebhookUrl);
+            //     Task.WaitAll(t);
+            // }
+            // catch (Exception e)
+            // {
+            //     log.LogError($"Send to Discord failed: {e.Message}");
+            // }
         }
 
         private static async Task _SendToDiscord(ILogger log, List<UserDailies> players, FleetData fleetData, string url)
@@ -77,10 +77,13 @@ namespace STTFleet
                 message.AppendLine($"__{squad?.Name ?? "Ohne Squad"}__ --- **{squad?.LastEventRank.Rank ?? 0}** --- (Avg {squad?.EventRanks.Select(e => e.Value.Rank).Average() ?? 0} of {squad?.EventRanks.Count ?? 0})");
                 foreach (var member in group)
                 {
-                    var player = fleetData.Players.First(p => p.Id == member.UserId);
-                    int avg = (int)Math.Floor(player.EventRanks.Select(e => e.Value.Rank).Average());
+                    var player = fleetData.Players.FirstOrDefault(p => p.Id == member.UserId);
+                    if (player != null)
+                    {
+                        int avg = (int)Math.Floor(player.EventRanks.Select(e => e.Value.Rank).Average());
 
-                    message.AppendLine($"{player.Name}: **{player.LastEventRank.Rank}** --- (Avg {avg} of {player.EventRanks.Count})");
+                        message.AppendLine($"{player.Name}: **{player.LastEventRank.Rank}** --- (Avg {avg} of {player.EventRanks.Count})");
+                    }
                 }
                 message.AppendLine(string.Empty);
             }
