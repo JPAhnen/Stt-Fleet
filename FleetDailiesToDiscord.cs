@@ -10,6 +10,7 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using STTFleet.STTApi;
+using System.Text.RegularExpressions;
 
 namespace STTFleet
 {
@@ -60,7 +61,8 @@ namespace STTFleet
             {
                 var squad = fleetData.Squads.FirstOrDefault(s => s.Id == group.Key);
 
-                message.AppendLine($"__{squad?.Name ?? "Ohne Squad"}__ --- **{squad?.LastEventRank.Rank ?? 0}** --- (Avg {squad?.EventRanks.Select(e => e.Value.Rank).Average() ?? 0} of {squad?.EventRanks.Count ?? 0})");
+                var squadName = Regex.Replace(squad?.Name ?? "Ohne Squad", @"\<\#[^<>]*\>", string.Empty);
+                message.AppendLine($"__{squadName}__ --- **{squad?.LastEventRank.Rank ?? 0}** --- (Avg {squad?.EventRanks.Select(e => e.Value.Rank).Average() ?? 0} of {squad?.EventRanks.Count ?? 0})");
                 foreach (var member in group)
                 {
                     var player = fleetData.Players.FirstOrDefault(p => p.Id == member.Id);

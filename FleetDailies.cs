@@ -11,6 +11,7 @@ using STTFleet.STTApi;
 using System.Text;
 using System.Net.Http;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace STTFleet
 {
@@ -34,7 +35,8 @@ namespace STTFleet
             var grouped = fleet.GroupBy(d => d.Squadron);
             foreach (var group in grouped)
             {
-                message.AppendLine($"__{group.Key}__");
+                var squadName = Regex.Replace(group?.Key ?? string.Empty, @"\<\#[^<>]*\>", string.Empty);
+                message.AppendLine($"__{squadName}__");
                 foreach (var member in group)
                 {
                     message.AppendLine($"{member.Name}: **{member.Dailies}**");
