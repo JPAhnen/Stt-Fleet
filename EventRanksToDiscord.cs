@@ -16,7 +16,7 @@ namespace STTFleet
 {
     public static class FleetDailiesToDiscord
     {
-        [FunctionName("FleetDailiesToDiscord")]
+        [FunctionName("EventRanksToDiscord")]
         public static async Task Run([CosmosDBTrigger(
             databaseName: "g5618-fleet",
             collectionName: "fleetdata",
@@ -62,13 +62,14 @@ namespace STTFleet
                 var squad = fleetData.Squads.FirstOrDefault(s => s.Id == group.Key);
 
                 var squadName = Regex.Replace(squad?.Name ?? "Ohne Squad", @"\<\#[^<>]*\>", string.Empty);
-                message.AppendLine($"__{squadName}__ --- **{squad?.LastEventRank.Rank ?? 0}** --- (Avg {squad?.EventRanks.Select(e => e.Value.Rank).Average() ?? 0} of {squad?.EventRanks.Count ?? 0})");
+                var fleetEventRank = (squad != null && squad.EventCount > 0) ? squad.EventRankSum / squad.EventCount : 0d;
+                message.AppendLine($"__{squadName}__ --- **{squad?.LastEventRank.Rank ?? 0}** --- (Avg {string.Format("{0:0}", fleetEventRank)} of {squad?.EventCount ?? 0})");
                 foreach (var member in group)
                 {
                     var player = fleetData.Players.FirstOrDefault(p => p.Id == member.Id);
-                    int avg = (int)Math.Floor(player?.EventRanks.Select(e => e.Value.Rank).Average() ?? 0);
-
-                    message.AppendLine($"{member.Name}: **{player?.LastEventRank.Rank ?? 0}** --- (Avg {avg} of {player?.EventRanks.Count ?? 0})");
+                    
+                    var playerEventRank = (player != null && player.EventCount > 0) ? player.EventRankSum / player.EventCount : 0d;
+                    message.AppendLine($"{member.Name}: **{player?.LastEventRank.Rank ?? 0}** --- (Avg {string.Format("{0:0}", playerEventRank)} of {player?.EventCount ?? 0})");
                 }
                 message.AppendLine(string.Empty);
             }

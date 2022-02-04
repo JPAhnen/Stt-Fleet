@@ -15,7 +15,8 @@ namespace STTFleet
     {
         public string Name {get; set;}
         public string Id {get; set;}
-        public Dictionary<DateTime, EventRank> EventRanks {get; set;}
+        public long EventRankSum { get; set; }
+        public int EventCount { get; set; }
         public EventRank LastEventRank {get; set;}
     }
 
@@ -24,7 +25,8 @@ namespace STTFleet
         public string Name {get; set;}
         public string Id {get; set;}
         public string SquadId {get; set;}
-        public Dictionary<DateTime, EventRank> EventRanks {get; set;}
+        public long EventRankSum { get; set; }
+        public int EventCount { get; set; }
         public EventRank LastEventRank {get; set;}
     }
 

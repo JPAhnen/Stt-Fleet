@@ -54,46 +54,46 @@ namespace STTFleet
             // }
         }
 
-        private static async Task _SendToDiscord(ILogger log, List<UserDailies> players, FleetData fleetData, string url)
-        {
-            string header = $"Events (UTC) {DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm")}";
-            var grouped = players.GroupBy(d => d.SquadronId);
+        // private static async Task _SendToDiscord(ILogger log, List<UserDailies> players, FleetData fleetData, string url)
+        // {
+        //     string header = $"Events (UTC) {DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm")}";
+        //     var grouped = players.GroupBy(d => d.SquadronId);
 
-            var g1 = grouped.Take(5);
-            var g2 = grouped.Skip(5);
-            await _PostGroupToDiscord(g1, fleetData, url, $"{header}");
-            await _PostGroupToDiscord(g2, fleetData, url, $"        -");
-        }
+        //     var g1 = grouped.Take(5);
+        //     var g2 = grouped.Skip(5);
+        //     await _PostGroupToDiscord(g1, fleetData, url, $"{header}");
+        //     await _PostGroupToDiscord(g2, fleetData, url, $"        -");
+        // }
 
-        private static async Task _PostGroupToDiscord(IEnumerable<IGrouping<string, UserDailies>> grouped, FleetData fleetData, string url, string header)
-        {
-            StringBuilder message = new StringBuilder();
-            message.AppendLine(header);
+        // private static async Task _PostGroupToDiscord(IEnumerable<IGrouping<string, UserDailies>> grouped, FleetData fleetData, string url, string header)
+        // {
+        //     StringBuilder message = new StringBuilder();
+        //     message.AppendLine(header);
 
-            foreach (var group in grouped)
-            {
-                var squad = fleetData.Squads.FirstOrDefault(s => s.Id == group.Key);
+        //     foreach (var group in grouped)
+        //     {
+        //         var squad = fleetData.Squads.FirstOrDefault(s => s.Id == group.Key);
 
-                message.AppendLine($"__{squad?.Name ?? "Ohne Squad"}__ --- **{squad?.LastEventRank.Rank ?? 0}** --- (Avg {squad?.EventRanks.Select(e => e.Value.Rank).Average() ?? 0} of {squad?.EventRanks.Count ?? 0})");
-                foreach (var member in group)
-                {
-                    var player = fleetData.Players.FirstOrDefault(p => p.Id == member.UserId);
-                    if (player != null)
-                    {
-                        int avg = (int)Math.Floor(player.EventRanks.Select(e => e.Value.Rank).Average());
+        //         message.AppendLine($"__{squad?.Name ?? "Ohne Squad"}__ --- **{squad?.LastEventRank.Rank ?? 0}** --- (Avg {squad?.EventRanks.Select(e => e.Value.Rank).Average() ?? 0} of {squad?.EventRanks.Count ?? 0})");
+        //         foreach (var member in group)
+        //         {
+        //             var player = fleetData.Players.FirstOrDefault(p => p.Id == member.UserId);
+        //             if (player != null)
+        //             {
+        //                 int avg = (int)Math.Floor(player.EventRanks.Select(e => e.Value.Rank).Average());
 
-                        message.AppendLine($"{player.Name}: **{player.LastEventRank.Rank}** --- (Avg {avg} of {player.EventRanks.Count})");
-                    }
-                }
-                message.AppendLine(string.Empty);
-            }
+        //                 message.AppendLine($"{player.Name}: **{player.LastEventRank.Rank}** --- (Avg {avg} of {player.EventRanks.Count})");
+        //             }
+        //         }
+        //         message.AppendLine(string.Empty);
+        //     }
 
-            HttpClient client = new HttpClient();
-            var d1 = JsonConvert.SerializeObject(new { content = message.ToString() });
-            var result = await client.PostAsync(url, new StringContent(d1, Encoding.UTF8, "application/json"));
+        //     HttpClient client = new HttpClient();
+        //     var d1 = JsonConvert.SerializeObject(new { content = message.ToString() });
+        //     var result = await client.PostAsync(url, new StringContent(d1, Encoding.UTF8, "application/json"));
 
-            result.EnsureSuccessStatusCode();
-        }
+        //     result.EnsureSuccessStatusCode();
+        // }
 
         private static List<SquadHistory> _UpdateSquadHistory(FleetData fleetData, List<SquadEventRank> squadEventRanks)
         {
@@ -102,13 +102,14 @@ namespace STTFleet
             {
                 squadEventRanks.ForEach(squad =>
                 {
-                    var s = fleetData?.Squads?.FirstOrDefault(i => i.Id == squad.SquadronId) ?? new SquadHistory() { Id = squad.SquadronId, EventRanks = new Dictionary<DateTime, EventRank>() };
+                    var s = fleetData?.Squads?.FirstOrDefault(i => i.Id == squad.SquadronId) ?? new SquadHistory() { Id = squad.SquadronId };
                     s.Name = squad.Name;
                     s.LastEventRank = new EventRank() { DateTime = DateTime.UtcNow.Date, Rank = squad.EventRank };
 
                     if (squad.EventRank > 0)
                     {
-                        s.EventRanks[s.LastEventRank.DateTime] = s.LastEventRank;
+                        s.EventRankSum += (long?)squad.EventRank ?? 0;
+                        s.EventCount += 1;
                     }
                     updatedSquadsLocal.Add(s);
                 });
@@ -124,13 +125,14 @@ namespace STTFleet
             {
                 playerEventRanks.ForEach(player =>
                 {
-                    var s = fleetData?.Players?.FirstOrDefault(i => i.Id == player.UserId) ?? new PlayerHistory() { Id = player.UserId, EventRanks = new Dictionary<DateTime, EventRank>() };
+                    var s = fleetData?.Players?.FirstOrDefault(i => i.Id == player.UserId) ?? new PlayerHistory() { Id = player.UserId };
                     s.Name = player.Name;
                     s.SquadId = player.SquadronId;
                     s.LastEventRank = new EventRank() { DateTime = DateTime.UtcNow.Date, Rank = player.EventRank ?? 0 };
                     if (player.EventRank > 0)
                     {
-                        s.EventRanks[s.LastEventRank.DateTime] = s.LastEventRank;
+                        s.EventRankSum += (long?)player.EventRank ?? 0;
+                        s.EventCount += 1;
                     }
                     updatedPlayersLocal.Add(s);
                 });
