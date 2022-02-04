@@ -47,7 +47,7 @@ namespace STTFleet
             }
 
             StringBuilder message2 = new StringBuilder();
-            message2.AppendLine($"(2) Dailies (UTC) {now}");
+            message2.AppendLine("        -");
             foreach (var group in grouped.Skip(5).Take(5))
             {
                 var squadName = Regex.Replace(group?.Key ?? string.Empty, @"\<\#[^<>]*\>", string.Empty);
