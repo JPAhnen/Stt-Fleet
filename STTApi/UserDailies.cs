@@ -11,6 +11,7 @@ namespace STTFleet.STTApi
       public string Squadron { get; set; }
       public string SquadronId { get; set; }
       public int? EventRank { get; set; }
+      public string DailyMissions { get; set; }
       
       public static List<UserDailies> Load(FleetMemberInfo memberInfo)
       {
@@ -21,6 +22,7 @@ namespace STTFleet.STTApi
             Name = member.display_name, 
             UserId = member.dbid.ToString(),
             Dailies = member.daily_activity, 
+            DailyMissions = $"{member.daily_meta_progress.progress}/{member.daily_meta_progress.goal}",
             Squadron = _GetSquadName(member.squad_id.ToString(), squads),
             SquadronId = member.squad_id.ToString(),
             EventRank = member.event_rank }).ToList();

@@ -71,9 +71,15 @@ namespace STTFleet.STTApi
       public int last_active { get; set; }
       public int starbase_activity { get; set; }
       public int daily_activity { get; set; }
+      public DailyProgress daily_meta_progress { get; set; }
       public int? event_rank { get; set; }
    }
 
+   public class DailyProgress 
+   {
+      public int progress {get; set; }
+      public int goal { get; set; }
+   }
    public class FleetMemberInfo
    {
       public string action { get; set; }
